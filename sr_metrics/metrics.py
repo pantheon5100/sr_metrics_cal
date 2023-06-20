@@ -127,29 +127,30 @@ class CalMetrics:
         sr: np.ndarray
         assert sr.max() > 1
         
-        results = []
+        results = dict()
         for metric in self.metrics:
             if hr is None:
                 res = self.SUPPORT_METRICS[metric](sr, crop_border, **kwargs)
             else:                
                 res = self.SUPPORT_METRICS[metric](sr, hr, crop_border=crop_border, **kwargs)
                 
-            results.append(res)
+            results[metric] = res
             
         if file_name != None:
             self.file_name_list.append(file_name)
         else:
             self.file_name_list.append(len(self.results_table))
         
-        self.results_table.append(results)
+        results_list = [results[metric] for metric in self.metrics]
+        self.results_table.append(results_list)
 
         with open(self.results_dir,'a+') as f: 
             cw = csv.writer(f)
-            cw.writerow([file_name] + results)
+            cw.writerow([file_name] + results_list)
 
         return results
     
-    def metrics(self, sr_dir, hr_dir=None, filename_tmpl='{}', crop_border=2, test_y_channel=True, pbar=True):
+    def metrics_dir(self, sr_dir, hr_dir=None, filename_tmpl='{}', crop_border=2, test_y_channel=True, pbar=True):
         """
         The image name need to be same or has same format.
         """
