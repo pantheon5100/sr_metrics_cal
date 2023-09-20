@@ -1,3 +1,6 @@
+# Super-resolution metrics calculation
+This code support `'PSNR', 'SSIM', 'LPIPS', 'NIQE'`. The result will be saved into a csv file. The calculation code is extraced from [Basicsr](https://github.com/XPixelGroup/BasicSR.git).
+
 # How to use
 1. install 
 ```bash
@@ -14,7 +17,7 @@ calculate_metrics = CalMetrics(f'results/result.csv')
 
 for lr, hr in dataloader:
     sr = ...
-    results_dict = calculate_metrics(sample, gt_img, crop_border= scale_factor, input_type='tensor_rgb_01', file_name=file_name, test_y_channel=True)
+    results_dict = calculate_metrics(sr, gt_img, crop_border= scale_factor, input_type='tensor_rgb_01', file_name=file_name, test_y_channel=True)
 
 calculate_metrics.average_results()
 ```

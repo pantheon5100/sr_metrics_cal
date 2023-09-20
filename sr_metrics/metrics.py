@@ -103,6 +103,8 @@ class CalMetrics:
                 pass
             else:
                 self.results_dir = programPause
+        else:
+            os.makedirs(os.path.dirname(self.results_dir), exist_ok=True)
         
         with open(self.results_dir, 'w') as f: 
             cw = csv.writer(f)
@@ -120,7 +122,7 @@ class CalMetrics:
         if input_type == 'tensor_rgb_01':
             sr = tensor2img(sr, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1))
         
-        if hr != None:
+        if hr is not None:
             if input_type == 'tensor_rgb_01':
                 hr = tensor2img(hr, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1))
             
@@ -150,27 +152,52 @@ class CalMetrics:
 
         return results
     
-    def metrics_dir(self, sr_dir, hr_dir=None, filename_tmpl='{}', crop_border=2, test_y_channel=True, pbar=True):
+    def metrics_dir(self, sr_dir, hr_dir=None, filename_tmpl='{}', crop_border=2, test_y_channel=True, pbar=True, sr_to_hr_map_func=None):
         """
         The image name need to be same or has same format.
         """
         sr_img_list = glob.glob(os.path.join(sr_dir, "*.png"))
+
+
+        #************************** for kernelGAN_ZSSR *************************
+        # sr_img_list=[]
+        # img_num = 0
+        # for fn in os.listdir(sr_dir): #fn 表示的是文件名
+        #     img_num = img_num+1
+
+        # for i in range(0,img_num):
+        #     i=i+1
+        #     path = os.path.join(sr_dir,'im_'+str(i),'ZSSR_'+'im_'+str(i)+'.png')
+        #     print(path)
+        #     sr_img_list.append(path)
+        # ***********************************************************************
+
+        # print(len(sr_img_list))
 
         if pbar:
             pbar = tqdm.tqdm(sr_img_list, desc="Metrics Cal.")
         else:
             pbar = sr_img_list
         for sr_img_path in pbar:
+                
+            
             basename, ext = os.path.splitext(os.path.basename(sr_img_path))
             sr_img = read_image(sr_img_path)
 
             if hr_dir:
-                gt_name = f'{filename_tmpl.format(basename)}{ext}'
-                gt_img_path = os.path.join(hr_dir, gt_name)
+                if sr_to_hr_map_func != None:
+                    gt_name = sr_to_hr_map_func(basename)
+                    gt_img_path = os.path.join(hr_dir, gt_name + f'{ext}' )
+                else:
+                    gt_name = f'{filename_tmpl.format(basename)}{ext}'
+                    gt_img_path = os.path.join(hr_dir, gt_name)
 
                 gt_img = read_image(gt_img_path)
             else:
                 gt_img = None
+            
+            w,h,_ = sr_img.shape
+            gt_img = gt_img[:w, :h, :]
             
             self(sr_img, hr=gt_img, crop_border=crop_border, input_type="np_bgr", file_name=basename, test_y_channel=test_y_channel)
         
